@@ -1,0 +1,361 @@
+---
+title: "Microplastics Bioindicators Data Exploration"
+author: "Leah Thornton Hampton"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    toc_float: true
+---
+
+```{r}
+#Setup
+
+#Libraries
+library(tidyverse)
+library(janitor)
+library(DT)
+
+#Data Import
+
+#Raw database
+tomex2 <- read_csv(
+  "Data/ToMEx_Search2026-03-04.csv",
+  na = c("", "NA", "Na", "N/A", "--")
+) |>
+  clean_names(replace = c("μ" = "u"))
+
+#Volume Aligned to Marine Sediment Alpha Values
+tomex2_vol_marinesed <- read_csv(
+  "Data/MarineSed_Vol_Count_ToMEx2.csv",
+  na = c("", "NA", "Na", "N/A", "--")
+) |>
+  clean_names(replace = c("μ" = "u"))
+
+#Volume Aligned to Marine Surface Water Alpha Values
+tomex2_vol_marinewater <- read_csv(
+  "Data/MarineWater_Vol_Count_ToMEx2.csv",
+  na = c("", "NA", "Na", "N/A", "--")
+) |>
+  clean_names(replace = c("μ" = "u"))
+
+```
+
+# Select Relevant Toxicity Data
+
+```{r}
+
+#group data set by taxa most relevant to different classes of bioindicators
+
+amphipod <- c(
+    "Hyalella azteca",
+    "Gammarus fossarum",
+    "Echinogammarus marinus",
+    "Gammarus pulex",
+    "Gammarus duebeni",
+    "Corophium volutator"
+    )
+
+bivalves <- c(
+    "Mytilus galloprovincialis",
+    "Abra nitida",
+    "Ennucula tenuis",
+    "Mytilus edulis",
+    "Crassostrea gigas",
+    "Pinctada margaritifera",
+    "Ostrea edulis",
+    "Dreissena polymorpha",
+    "Sphaerium corneum",
+    "Scrobicularia plana",
+    "Perna viridis",
+    "Corbicula fluminea",
+    "Atactodea striata",
+    "Anodonta anatina",
+    "Dreissena bugensis",
+    "Meretrix meretrix",
+    "Mactra veneriformis",
+    "Limecola balthica",
+    "Mytilus coruscus"
+  )
+
+benthic_invert <- c(
+  "Arenicola marina",
+  "Abra nitida",
+  "Ennucula tenuis",
+  "Perinereis aibuhitensis",
+  "Hediste diversicolor",
+  "Amphiura filiformis",
+  "Potamopyrgus antipodarum",
+  "Corbicula fluminea",
+  "Alitta virens",
+  "Limecola balthica",
+  "Corophium volutator"
+)
+
+plankton <- c(
+  "Calanus helgolandicus",
+  "Calanus finmarchicus",
+  "Parvocalanus crassirostris",
+  "Paracyclopina nana",
+  "Acartia clausi",
+  "Acartia tonsa",
+  "Nitocra spinipes",
+  "Brachionus plicatilis",
+  "Brachionus koreanus",
+  "Brachionus calyciflorus",
+  "Brachionus fernandoi",
+  "Moina macrocopa",
+  "Diaphanosoma celebensis",
+  "Raphidocelis subcapitata",
+  "Scenedesmus obliquus",
+  "Scenedesmus armatus",
+  "Chlorella vulgaris",
+  "Chlorella pyrenoidosa",
+  "Dunaliella salina",
+  "Dunaliella tertiolecta",
+  "Tetraselmis chuii",
+  "Chlamydomonas reinhardtii",
+  "Chaetoceros neogracile",
+  "Thalassiosira pseudonana",
+  "Skeletonema costatum",
+  "Heterocapsa triquetra",
+  "Karenia mikimotoi",
+  "Amphidinium carterae",
+  "Gyrodinium sp.",
+  "Protoperidinium bipes",
+  "Strombidium sulcatum",
+  "Oxyrrhis marina",
+  "Microcystis aeruginosa",
+  "Microcystis flos-aquae",
+  "Chlorella NA",
+  "Anabaena NA",
+  "Spirulina NA",
+  "Diatoms NA",
+  "Microalgae NA",
+  "Cyanobacteria NA"
+)
+
+taxa_lists <- list(
+  amphipod = amphipod,
+  bivalve = bivalves,
+  benthic_invertebrate = benthic_invert,
+  plankton = plankton
+)
+
+species_groups <- tibble::enframe(taxa_lists,
+                                  name = "species_group",
+                                  value = "species") %>%
+  tidyr::unnest(species)
+
+tomex2 <- tomex2 %>%
+  left_join(species_groups, by = "species", relationship = "many-to-many") %>% 
+  #only use data pertaining to species groups
+  filter(!is.na(species_group))
+
+tomex2_vol_marinesed <- tomex2_vol_marinesed %>%
+  left_join(species_groups, by = "species", relationship = "many-to-many")%>% 
+  #only use data pertaining to species groups
+  filter(!is.na(species_group))
+
+tomex2_vol_marinewater <- tomex2_vol_marinewater %>%
+  left_join(species_groups, by = "species", relationship = "many-to-many")%>% 
+  #only use data pertaining to species groups
+  filter(!is.na(species_group))
+
+```
+
+What relevant toxicity data is in ToMEx 2.0?
+
+```{r}
+
+study_sum <- tomex2 %>% 
+  # group_by(doi, species_group, species, environment) %>% 
+  # summarise()
+  
+  
+  filter(
+         technical_red_criteria == "Red Criteria Passed",
+         risk_assessment_red_criteria == "Red Criteria Passed",
+         ) %>% 
+  group_by(species_group, environment) %>% 
+  summarise(study_count = n_distinct(doi), species_count = n_distinct(species))
+
+datatable(study_sum)
+
+
+tomex2 <- tomex2 %>% 
+  filter(
+         technical_red_criteria == "Red Criteria Passed",
+         risk_assessment_red_criteria == "Red Criteria Passed",
+         )  
+```
+
+```{r}
+
+# Count polymers
+polymer_pct <- tomex2 %>%
+  group_by(species_group, polymer) %>%
+  summarise(count = n_distinct(doi), .groups = "drop") %>%
+  group_by(species_group) %>%
+  mutate(percent = round(100 * count / sum(count), 1)) %>%
+  select(-count) %>%
+  pivot_wider(names_from = polymer, values_from = percent, values_fill = 0)
+
+# Count shapes
+shape_pct <- tomex2 %>%
+  group_by(species_group, shape) %>%
+  summarise(count = n_distinct(doi), .groups = "drop") %>%
+  group_by(species_group) %>%
+  mutate(percent = round(100 * count / sum(count), 1)) %>%
+  select(-count) %>%
+  pivot_wider(names_from = shape, values_from = percent, values_fill = 0)
+
+length_summary <- tomex2 %>%
+  group_by(species_group) %>%
+  summarise(
+    mean_length_um = mean(particle_length_um, na.rm = TRUE),
+    sd_length_um = sd(particle_length_um, na.rm = TRUE),
+    min_length_um = min(particle_length_um, na.rm = TRUE),
+    max_length_um = max(particle_length_um, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+compact_summary <- length_summary %>%
+  left_join(polymer_pct, by = "species_group") %>%
+  left_join(shape_pct, by = "species_group") %>%
+  arrange(species_group) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 1)))
+
+datatable(
+  compact_summary,
+  rownames = FALSE,
+  options = list(
+    pageLength = 10,      # number of rows per page
+    autoWidth = TRUE,     # auto-adjust column widths
+    scrollX = TRUE        # enable horizontal scroll
+  ),
+  class = 'stripe hover compact'  # optional styling
+)
+
+```
+
+```{r}
+
+size <- tomex2 %>% 
+  filter(!is.na(particle_length_um)) %>% 
+  ggplot(aes(x = particle_length_um)) +
+  geom_histogram(binwidth = 25, fill = "skyblue", color = "black") +
+  facet_wrap(~ species_group, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Particle Length Distribution by Organism Group",
+    x = "Particle Length (µm)",
+    y = "Count"
+  )
+
+plot(size)
+
+```
+```{r}
+
+polymer <- tomex2 %>% 
+  filter(!is.na(polymer)) %>%   # remove NAs
+  group_by(species_group, polymer) %>%
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot(aes(x = species_group, y = n, fill = polymer))+
+  geom_bar(position = "dodge", stat = "identity")
+
+polymer
+
+```
+
+```{r}
+
+shape <- tomex2 %>% 
+  filter(!is.na(shape)) %>%   # remove NAs
+  group_by(species_group, shape) %>%
+  summarise(n = n(), .groups = "drop") %>% 
+  ggplot(aes(x = species_group, y = n, fill = shape))+
+  geom_bar(position = "dodge", stat = "identity")
+
+shape
+
+```
+
+```{r}
+
+tox_summary <- tomex2 %>% 
+  filter(!is.na(species_group)) %>% 
+  filter(
+    level_of_biological_organization %in% c("Organism", "Population", "Community"),
+    !is.na(effect_metric),
+    exposure_route == "water",
+    ) %>% 
+  select(doi, species, species_group, level_of_biological_organization, broad_endpoint_category, specific_endpoint_category, effect_metric, 
+         ends_with("_master")) %>% 
+  pivot_longer(
+    cols = ends_with("master"),
+    names_to = "dose_metric",
+    values_to = "dose",
+    values_drop_na = TRUE
+  ) 
+  
+tox_summary_plot <- tox_summary %>% 
+  filter(effect_metric != "HONEC") %>% 
+  ggplot(aes(x = species_group, y = dose, colour = effect_metric))+
+  geom_boxplot()+
+  facet_wrap(~dose_metric, scales="free")+
+  scale_y_log10()
+
+tox_summary_plot
+```
+
+```{r}
+
+tox_summary <- tomex2_vol_marinesed %>%
+  filter(
+    level_of_biological_organization %in% c("Organism", "Population", "Community"),
+    !is.na(effect_metric),
+    exposure_route == "water"
+    ) %>% 
+  select(doi, species, species_group, level_of_biological_organization, broad_endpoint_category, specific_endpoint_category, effect_metric, 
+         plotted_dose_values) 
+  
+tox_summary_plot <- tox_summary %>% 
+  filter(effect_metric != "HONEC") %>% 
+  ggplot(aes(x = species_group, y = plotted_dose_values, colour = effect_metric))+
+  geom_boxplot()+
+  # facet_wrap(~dose_metric, scales="free")+
+  scale_y_log10()
+
+tox_summary_plot
+
+```
+```{r}
+
+tox_summary <- tomex2_vol_marinewater %>%
+  filter(
+    # environment == "Marine",
+    level_of_biological_organization %in% c("Organism", "Population", "Community"),
+    !is.na(effect_metric),
+    exposure_route == "water"
+    ) %>% 
+  select(doi, species, species_group, level_of_biological_organization, broad_endpoint_category, specific_endpoint_category, effect_metric, 
+         plotted_dose_values) 
+  
+tox_summary_plot <- tox_summary %>% 
+  filter(effect_metric != "HONEC") %>% 
+  ggplot(aes(x = species_group, y = plotted_dose_values, fill = effect_metric))+
+  geom_boxplot()+
+  # facet_wrap(~dose_metric, scales="free")+
+  scale_y_log10()+
+  labs(y = "Particles/mL (Volume Aligned)", x = "Species Group", fill = "Effect Metric")+
+  theme_minimal()
+
+tox_summary_plot
+
+```
+

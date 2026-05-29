@@ -1,0 +1,82 @@
+"","stationid","lab","sampleid","matrix","labbatch","n_total","n_particles_sub","n_plastic_con","n_spec_correct","mass_g_dry","stratumtype","n_g_sed_dw","total_mda","mda_flag"
+"1","B23-12074","Oregon State University","B23_12074_S","Sediment","1",323,97,76,253.072164948454,30,"Embayment",8.43573883161512,3,NA
+"2","B23-12198","Oregon State University","B23_12198_S","Sediment","4",446,75,26,154.613333333333,70,"Offshore",2.2087619047619,12,NA
+"3","B23-12204","Oregon State University","B23_12204_S","Sediment","4",67,58,29,33.5,60,"Offshore",0.558333333333333,12,NA
+"4","B23-12089","University of California, Riverside","B23_12089_S","Sediment","10",56,44,29,36.9090909090909,61.40033004,"Embayment",0.601122027927961,22,NA
+"5","B23-12590","Oregon State University","B23_12590_S","Sediment","3",27,27,1,1,30,"Offshore",0.0333333333333333,24,NA
+"6","B23-12140","Oregon State University","B23_12140_S","Sediment","11",42,41,8,8.19512195121951,65,"Embayment",0.126078799249531,24,NA
+"7","B23-12196","Oregon State University","B23_12196_S","Sediment","10",29,26,3,3.34615384615385,74,"Offshore",0.0452182952182952,18,NA
+"8","B23-12209","Oregon State University","B23_12209_S","Sediment","1",133,78,32,54.5641025641026,80,"Offshore",0.682051282051282,3,NA
+"9","B23-12011","Oregon State University","B23_12011_S","Sediment","3",125,75,41,68.3333333333333,50,"Embayment",1.36666666666667,24,NA
+"10","B23-12201","Oregon State University","B23_12201_S","Sediment","11",105,85,63,77.8235294117647,75,"Offshore",1.03764705882353,24,NA
+"11","B23-12040","University of California, Riverside","B23_12040_S_2","Sediment","7",111,81,38,52.0740740740741,58.09575091,"Embayment",0.896349100552044,12,NA
+"12","B23-12033","Oregon State University","B23_12033_S","Sediment","16",154,77,37,74,75,"Embayment",0.986666666666667,18,NA
+"13","B23-12191","Oregon State University","B23_12191_S","Sediment","16",64,59,11,11.9322033898305,75,"Offshore",0.15909604519774,18,NA
+"14","B23-12188","Oregon State University","B23_12188_S","Sediment","2",44,44,8,8,40,"Offshore",0.2,54,"Total particle count < MDA"
+"15","B23-12120","University of California, Riverside","B23_12120_S","Sediment","3",111,75,42,62.16,47.40507204,"Embayment",1.31125209444993,34,NA
+"16","B23-12078","University of California, Riverside","B23_12078_S","Sediment","7",153,113,85,115.088495575221,48.98088651,"Embayment",2.34966134293475,12,NA
+"17","B23-12119","University of California, Riverside","B23_12119_S","Sediment","3",96,76,36,45.4736842105263,53.44660656,"Embayment",0.850824535688282,34,NA
+"18","B23-12008","University of California, Riverside","B23_12008_S_2","Sediment","1",60,60,41,41,46.21929567,"Embayment",0.887075395798648,28,NA
+"19","B23-12087","University of California, Riverside","B23_12087_S","Sediment","2",109,75,68,98.8266666666667,51.20245104,"Embayment",1.93011593506455,29,NA
+"20","B23-12022","Oregon State University","B23_12022_S","Sediment","7",93,75,9,11.16,75,"Embayment",0.1488,18,NA
+"21","B23-12044","University of California, Riverside","B23_12044_S_2","Sediment","6",110,93,45,53.2258064516129,73.99380872,"Embayment",0.719327837995537,20,NA
+"22","B23-12213","Oregon State University","B23_12213_S","Sediment","5",61,56,5,5.44642857142857,80,"Offshore",0.0680803571428571,33,NA
+"23","B23-12134","Oregon State University","B23_12134_S","Sediment","6",88,75,32,37.5466666666667,50,"Embayment",0.750933333333333,33,NA
+"24","B23-12019","University of California, Riverside","B23_12019_S_3","Sediment","4",26,26,11,11,50.42384553,"Embayment",0.218150755547898,53,"Total particle count < MDA"
+"25","B23-12081","University of California, Riverside","B23_12081_S","Sediment","1",179,73,61,149.575342465753,38.45425052,"Embayment",3.88969594890322,28,NA
+"26","B23-12210","Oregon State University","B23_12210_S","Sediment","5",50,50,6,6,70,"Offshore",0.0857142857142857,33,NA
+"27","B23-12203","Oregon State University","B23_12203_S","Sediment","2",87,77,27,30.5064935064935,75,"Offshore",0.406753246753247,54,NA
+"28","B23-12195","Oregon State University","B23_12195_S","Sediment","7",41,41,10,10,80,"Offshore",0.125,18,NA
+"29","SC-SSP","California State University, Long Beach","B23_SSP_SED","Sediment","4",36,36,36,36,39.368,"Estuary",0.914448282869336,16,NA
+"30","B23-12049","University of California, Riverside","B23_12049_S_2","Sediment","4",380,75,67,339.466666666667,58.97605506,"Embayment",5.75600837189443,53,NA
+"31","B23-12143","University of California, Riverside","B23_12143_S","Sediment","9",301,75,50,200.666666666667,49.234716,"Embayment",4.07571492169604,26,NA
+"32","B23-12035","University of California, Riverside","B23_12035_S_3","Sediment","8",102,74,37,51,60.32024976,"Embayment",0.845487215369912,34,NA
+"33","B23-12061","University of California, Riverside","B23_12061_S_2","Sediment","6",210,75,52,145.6,47.3179482,"Embayment",3.07705649840498,20,NA
+"34","B23-12084","University of California, Riverside","B23_12084_S","Sediment","2",133,74,52,93.4594594594595,56.57203031,"Embayment",1.65204357961569,29,NA
+"35","B23-12126","University of California, Riverside","B23_12126_S","Sediment","9",70,49,26,37.1428571428571,45.86180291,"Embayment",0.809886545798187,26,NA
+"36","B23-12023","University of California, Riverside","B23_12023_S","Sediment","10",45,41,18,19.7560975609756,60.83739371,"Embayment",0.324736093317033,22,NA
+"37","B23-12127","University of California, Riverside","B23_12127_S","Sediment","8",66,46,18,25.8260869565217,63.84036945,"Embayment",0.404541627484609,34,NA
+"38","B23-12027","University of California, Riverside","B23_12027_S","Sediment","5",226,75,37,111.493333333333,44.2179,"Embayment",2.52145247362117,18,NA
+"39","B23-12052","University of California, Riverside","B23_12052_S_2","Sediment","5",109,74,47,69.2297297297297,53.598348,"Embayment",1.29163924473437,18,NA
+"40","B23-12591","Oregon State University","B23_12591_S","Sediment","8",43,43,12,12,80,"Offshore",0.15,16,NA
+"41","B23-12211","Oregon State University","B23_12211_S","Sediment","6",87,75,10,11.6,65,"Offshore",0.178461538461538,33,NA
+"42","B23-12031","Oregon State University","B23_12031_S","Sediment","9",40,40,7,7,65,"Embayment",0.107692307692308,20,NA
+"43","B23-12109","Oregon State University","B23_12109_S","Sediment","9",142,87,60,97.9310344827586,70,"Embayment",1.39901477832512,20,NA
+"44","B23-12208","Oregon State University","B23_12208_S","Sediment","12",59,56,8,8.42857142857143,80,"Offshore",0.105357142857143,20,NA
+"45","B23-12197","Oregon State University","B23_12197_S","Sediment","13",55,55,27,27,78,"Offshore",0.346153846153846,12,NA
+"46","SC-LPL","California State University, Long Beach","B23_LPL_SED","Sediment","1",40,40,37,37,44.5,"Estuary",0.831460674157303,18,NA
+"47","SC-TOP","California State University, Long Beach","B23_SC_TOP_SED","Sediment","10",30,30,30,30,33.768,"Estuary",0.888415067519545,12,NA
+"48","SC-ASE","California State University, Long Beach","B23_SC_ASE_SED","Sediment","11",37,37,37,37,34.036,"Estuary",1.08708426372077,18,NA
+"49","SC-MUGU","California State University, Long Beach","B23_SC_MUGU_SED","Sediment","9",32,32,30,30,37.133,"Estuary",0.807906713704791,16,NA
+"50","SC-GOLS","California State University, Long Beach","B23_SC_GOLS_SED","Sediment","7",31,31,31,31,36.61,"Estuary",0.846763179459164,14,NA
+"51","SC-BAQU","California State University, Long Beach","B23_SC_BAQU_SED","Sediment","8",41,41,39,39,43.775,"Estuary",0.890919474585951,22,NA
+"52","SC-DEVS","California State University, Long Beach","B23_SC_DEV_SED","Sediment","5",29,29,29,29,53.64,"Estuary",0.540641312453393,16,NA
+"53","SC-SEL","California State University, Long Beach","B23_SEL_SED","Sediment","3",43,43,37,37,47.96,"Estuary",0.771476230191827,18,NA
+"54","SC-MALB","California State University, Long Beach","B23_MAL_SED","Sediment","3",37,37,31,31,47.09,"Estuary",0.658313867063071,18,NA
+"55","B23-12046","Oregon State University","B23_12046_S","Sediment","21",289,75,56,215.786666666667,32.5,"Embayment",6.63958974358974,18,NA
+"56","SC-VEN","California State University, Long Beach","B23_VEN_SED","Sediment","12",35,35,29,29,49.49,"Estuary",0.585976965043443,28,NA
+"57","B23-12124","Oregon State University","B23_12124_S","Sediment","20",103,76,19,25.75,65,"Embayment",0.396153846153846,18,NA
+"58","B23-12192","Oregon State University","B23_12192_S","Sediment","14",51,48,16,17,75,"Offshore",0.226666666666667,28,NA
+"59","B23-12200","Oregon State University","B23_12200_S","Sediment","15",140,76,5,9.21052631578947,72,"Offshore",0.127923976608187,26,NA
+"60","B23-12215","Oregon State University","B23_12215_S","Sediment","27",26,25,3,3.12,47,"Offshore",0.0663829787234043,NA,NA
+"61","B23-12187","Oregon State University","B23_12187_S","Sediment","17",150,75,5,10,77,"Offshore",0.12987012987013,16,NA
+"62","B23-12194","Oregon State University","B23_12194_S","Sediment","18",50,50,5,5,95,"Offshore",0.0526315789473684,20,NA
+"63","B23-12199","Oregon State University","B23_12199_S","Sediment","17",112,76,4,5.89473684210526,70,"Offshore",0.0842105263157895,16,NA
+"64","B23-12193","Oregon State University","B23_12193_S","Sediment","19",63,59,6,6.40677966101695,74,"Offshore",0.0865781035272561,12,NA
+"65","B23-12207","Oregon State University","B23_12207_S","Sediment","22",58,56,7,7.25,93,"Offshore",0.0779569892473118,18,NA
+"66","B23-12216","Oregon State University","B23_12216_S","Sediment","23",36,36,6,6,84,"Offshore",0.0714285714285714,24,NA
+"67","B23-12205","Oregon State University","B23_12205_S","Sediment","24",97,76,17,21.6973684210526,85,"Offshore",0.255263157894737,NA,NA
+"68","B23-12202","Oregon State University","B23_12202_S","Sediment","27",106,70,15,22.7142857142857,79,"Offshore",0.2875226039783,NA,NA
+"69","B23-12206","Oregon State University","B23_12206_S","Sediment","26",86,76,11,12.4473684210526,79,"Offshore",0.157561625582945,NA,NA
+"70","B23-12212","Oregon State University","B23_12212_S","Sediment","26",84,75,8,8.96,81,"Offshore",0.110617283950617,NA,NA
+"71","B23-12214","Oregon State University","B23_12214_S","Sediment","25",144,76,8,15.1578947368421,80,"Offshore",0.189473684210526,NA,NA
+"72","SC-CARP","California State University, Bakersfield","B23_CRP_Sed","Sediment","1",26,26,22,22,74.7,"Estuary",0.294511378848728,28,"Total particle count < MDA"
+"73","SC-AGHD","California State University, Bakersfield","B23_AGH_Sed","Sediment","1",68,68,57,57,82.296456,"Estuary",0.692617917835976,28,NA
+"74","SC-HBWT","California State University, Bakersfield","B23_HBW_Sed","Sediment","1",72,72,54,54,61.34,"Estuary",0.880339093576785,28,NA
+"75","SC-SWM","California State University, Bakersfield","B23_SWM_Sed","Sediment","1",52,52,47,47,76.467646,"Estuary",0.614639033088582,28,NA
+"76","SC-TJEN","California State University, Bakersfield","B23_TJEN_Sed","Sediment","1",75,75,64,64,36.593659,"Estuary",1.74893688548609,28,NA
+"77","SC-COL","California State University, Bakersfield","B23_COL_Sed","Sediment","1",61,61,51,51,81.16,"Estuary",0.62838836865451,28,NA
+"78","SC-KFR","California State University, Bakersfield","B23_KFR_Sed","Sediment","1",43,43,40,40,57.014298,"Estuary",0.701578400561908,28,NA
+"79","SC-SDL","California State University, Bakersfield","B23_SDL_Sed","Sediment","1",41,41,39,39,73.31466,"Estuary",0.531953636557818,28,NA
+"80","SC-BOLC","California State University, Bakersfield","B23_BOLC_Sed","Sediment","1",54,54,48,48,83.386674,"Estuary",0.575631545155525,28,NA
+"81","SC-NPBY","California State University, Bakersfield","B23_NEW_Sed","Sediment","1",57,57,51,51,55.325532,"Estuary",0.921816712038124,28,NA

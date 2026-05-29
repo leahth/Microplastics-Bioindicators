@@ -1,0 +1,43 @@
+---
+title: "Microplastics Bioindicators: Bight 23 Regional Monitoring"
+author: "Leah Thornton Hampton"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document: 
+    code_folding: hide
+    toc: true
+    toc_depth: 4
+    number_sections: true
+    toc_float: true
+---
+
+```{r, Packages}
+
+library(tidyverse)
+library(ggpubr)
+
+```
+
+```{r, Data Import}
+
+mp_sed_con <- read.csv(file = "Data/sed_mp_con.csv")
+
+condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
+
+```
+
+```{r, Benthic Indices}
+
+mpdata_scores <- left_join(mp_sed_con, condition_scores)
+
+corr <- mpdata_scores %>%
+  filter(index != "offshore_bri") %>%
+  ggplot(aes(x = score, y = n_spec_correct))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free")
+
+corr
+
+```
