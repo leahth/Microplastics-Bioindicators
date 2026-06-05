@@ -2,29 +2,35 @@
 title: "Microplastics Bioindicators: Bight 23 Regional Monitoring"
 author: "Leah Thornton Hampton"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-format: html
+format:
+  html:
+    toc: true
 ---
+# Load libraries 
 
 ```{r, Packages}
-#| label: Load-libraries 
 
 library(tidyverse)
 library(ggpubr)
 
 ```
 
+# Import data
+
 ```{r, Data Import}
-#| label: Import-data
 
 mp_sed_con <- read.csv(file = "Data/sed_mp_con.csv")
 
 condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
 
+benthic_abundance <- read.csv(file = "Data/B23 Post SDR benthic data.csv")
+
+bight_infauna_unified <- read.csv(file = "Data/ed14 historical Bight infauna for unified DB v2.csv")
+
 ```
 
+# MPs x all Benthic-indices
 ```{r, Benthic Indices}
-
-#| label: MPs x all Benthic-indices
 
 mpdata_scores <- left_join(mp_sed_con, condition_scores) |> 
   group_by(stationid, stratumtype, index, score, condition, cond_class, n_g_sed_dw) |> 
@@ -66,9 +72,9 @@ cond_class
 
 ```
 
-```{r, M-AMBI}
+# MPs x M-AMBI
 
-#| label: MPs x M-AMBI
+```{r, M-AMBI}
 
 ambi <- mpdata_scores |> 
   filter(index == "M-AMBI")
@@ -112,3 +118,165 @@ corr <- ambi |>
 
 corr
 ```
+
+# Taxon Abundance Correlation
+
+```{r}
+
+#Join microplastics sediment concentration data with benthic taxon abundance
+
+mpdata_abundance <- left_join(mp_sed_con, benthic_abundance, by = "stationid") |>
+  select(-X, -lab.x, -lab.y, -sampledate, -replicate, -voucher, -personalvoucher, -qualifier, -taxonomist )
+
+#Check where data is missing
+mpdata_abundance |> 
+  filter(is.na(abundance)) |> 
+  distinct(stationid) |> 
+  nrow()
+
+#21 stations with mp data do not have microplastics data
+#drop stations with no abundance data from analysis
+
+mpdata_abundance <- mpdata_abundance |>
+  drop_na(abundance)
+
+
+
+#taxon-abundance-correlation
+
+taxon_cor <- mpdata_abundance |>
+  group_by(taxon) |>
+  filter(n() >= 5) |>
+  summarise(
+    n_stations = n(),
+    spearman_r = cor(abundance, n_g_sed_dw, method = "spearman", use = "complete.obs"),
+    p_value = cor.test(abundance, n_g_sed_dw, method = "spearman")$p.value,
+    .groups = "drop"
+  ) |>
+  arrange(p_value) |>
+  as.data.frame()
+
+taxon_sig_neg_cor <- taxon_cor |>
+  filter(spearman_r < 0 & p_value < 0.05)
+
+#taxon-correlation-plot
+
+##As expected some species are positively correlated and some are negatively correlated with MP abundance. This on its own isn't very useful. Need to look if species traits or families are positively or negatively correlated
+
+taxon_cor |>
+  mutate(
+    sig = case_when(
+      p_value < 0.001 ~ "p < 0.001",
+      p_value < 0.01  ~ "p < 0.01",
+      p_value < 0.05  ~ "p < 0.05",
+      TRUE            ~ "ns"
+    ),
+    sig = factor(sig, levels = c("p < 0.001", "p < 0.01", "p < 0.05", "ns")),
+    taxon = reorder(taxon, spearman_r)
+  ) |>
+  ggplot(aes(x = spearman_r, y = taxon, fill = sig)) +
+  geom_col() +
+  geom_vline(xintercept = 0, linewidth = 0.4) +
+  scale_fill_manual(values = c(
+    "p < 0.001" = "#2166ac",
+    "p < 0.01"  = "#74add1",
+    "p < 0.05"  = "#abd9e9",
+    "ns"        = "grey75"
+  )) +
+  labs(
+    x = "Spearman r",
+    y = NULL,
+    fill = "Significance",
+    title = "Taxon abundance vs. MP sediment concentration"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+
+##David mentioned that species traits (e.g., position, mobility, reproduction, feeding) vary at the family level. Join families to the abundance data and analyze
+
+###NEED TO QA THIS -- NOT COMPLETE
+
+
+#Check taxon overlap with historical Bight infauna
+shared_taxa <- intersect(unique(mpdata_abundance$taxon), unique(bight_infauna_unified$taxon))
+only_in_mpdata <- setdiff(unique(mpdata_abundance$taxon), unique(bight_infauna_unified$taxon))
+
+cat("Taxa in both mpdata_abundance and bight_infauna_unified:", length(shared_taxa), "\n")
+cat("Taxa only in mpdata (not in historical data):", length(only_in_mpdata), "\n")
+
+#51 taxa in mpdata that don't match with taxa in unified data
+##CHECK to see if this is real or if there are syntax issues
+
+taxa_classification <- bight_infauna_unified |> 
+  select(taxon, Phylum, Subphylum, Superclass, Class, Subclass, Infraclass, Superorder, Order, Suborder, Infraorder, Superfamily, Family) |> 
+  distinct(taxon, Phylum, Subphylum, Superclass, Class, Subclass, Infraclass, Superorder, Order, Suborder, Infraorder, Superfamily, Family)
+
+n_distinct(taxa_classification$taxon)    #2860
+n_distinct(mpdata_abundance$taxon)  #787
+
+mpdata_sp_class <- left_join(mpdata_abundance, taxa_classification, by = "taxon") ##add 
+
+
+mpdata_sp_class <- mpdata_sp_class |>
+  drop_na(Family)
+
+family_abundance <- mpdata_sp_class |>
+  group_by(stationid, Family, n_g_sed_dw, stratumtype) |>
+  summarise(abundance = sum(abundance, na.rm = TRUE), .groups = "drop")
+
+
+
+#family-abundance-correlation
+
+family_cor <- family_abundance |>
+  group_by(Family) |>
+  filter(n() >= 5) |>
+  summarise(
+    n_stations = n(),
+    spearman_r = cor(abundance, n_g_sed_dw, method = "spearman", use = "complete.obs"),
+    p_value = cor.test(abundance, n_g_sed_dw, method = "spearman")$p.value,
+    .groups = "drop"
+  ) |>
+  mutate(p_adj = p.adjust(p_value, method = "BH")) |>
+  arrange(p_adj) |>
+  as.data.frame()
+
+family_sig_neg_cor <- family_cor |>
+  filter(spearman_r < 0 & p_value < 0.05)
+
+#family-correlation-plot
+
+##As expected some families are positively correlated and some are negatively correlated with MP abundance.
+
+family_cor |>
+  mutate(
+    sig = case_when(
+      p_value < 0.001 ~ "p < 0.001",
+      p_value < 0.01  ~ "p < 0.01",
+      p_value < 0.05  ~ "p < 0.05",
+      TRUE          ~ "ns"
+    ),
+    sig = factor(sig, levels = c("p < 0.001", "p < 0.01", "p < 0.05", "ns")),
+    Family = reorder(Family, spearman_r)
+  ) |>
+  ggplot(aes(x = spearman_r, y = Family, fill = sig)) +
+  geom_col() +
+  geom_vline(xintercept = 0, linewidth = 0.4) +
+  scale_fill_manual(values = c(
+    "p < 0.001" = "#2166ac",
+    "p < 0.01"  = "#74add1",
+    "p < 0.05"  = "#abd9e9",
+    "ns"        = "grey75"
+  )) +
+  labs(
+    x = "Spearman r",
+    y = NULL,
+    fill = "Significance",
+    title = "Family abundance vs. MP sediment concentration"
+  ) +
+  theme_minimal()
+
+
