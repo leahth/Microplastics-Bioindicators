@@ -1,0 +1,108 @@
+---
+title: "Microplastics Bioindicators: Bight 23 Regional Monitoring"
+author: "Leah Thornton Hampton"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: html
+---
+
+```{r, Packages}
+
+library(tidyverse)
+library(ggpubr)
+
+```
+
+```{r, Data Import}
+
+mp_sed_con <- read.csv(file = "Data/sed_mp_con.csv")
+
+condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
+
+```
+
+```{r, Benthic Indices}
+
+mpdata_scores <- left_join(mp_sed_con, condition_scores) |> 
+  group_by(stationid, stratumtype, index, score, condition, cond_class, n_g_sed_dw) |> 
+  summarise(.groups = "drop") |> 
+  drop_na(score, n_g_sed_dw) 
+
+scores <- mpdata_scores |> 
+  ggplot(aes(x = score, y = n_g_sed_dw))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  facet_wrap(~index)+
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free") +
+  labs(x = "score", y = "")
+
+scores
+
+cond <- mpdata_scores |> 
+  ggplot(aes(x = condition, y = n_g_sed_dw))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  facet_wrap(~index)+
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free") +
+  labs(x = "condition", y = "")
+
+cond
+
+cond_class <- mpdata_scores |> 
+  ggplot(aes(x = cond_class, y = n_g_sed_dw))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  facet_wrap(~index)+
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free") +
+  labs(x = "condition", y = "")
+
+cond_class
+
+```
+
+```{r, M-AMBI}
+
+ambi <- mpdata_scores |> 
+  filter(index == "M-AMBI")
+
+# 1. Normality: Shapiro-Wilk test (p > 0.05 suggests normality)
+shapiro.test(ambi$score)
+shapiro.test(ambi$n_g_sed_dw) 
+
+# 2. Normality: Q-Q plots
+par(mfrow = c(1, 2))
+qqnorm(ambi$score, main = "Q-Q Plot: score")
+qqline(ambi$score, col = "steelblue")
+qqnorm(ambi$n_g_sed_dw, main = "Q-Q Plot: n_g_sed_dw")
+qqline(ambi$n_g_sed_dw, col = "steelblue")
+par(mfrow = c(1, 1))
+
+# 3. Linearity: scatter plot with LOESS and linear smoother
+ggplot(ambi, aes(x = score, y = n_g_sed_dw)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", color = "steelblue", se = TRUE) +
+  geom_smooth(method = "loess", color = "tomato", se = FALSE, linetype = "dashed") +
+  labs(title = "Linearity check: score vs n_g_sed_dw (M-AMBI)",
+       subtitle = "Blue = linear fit, Red dashed = LOESS")
+
+# 4. Outliers: boxplots
+par(mfrow = c(1, 2))
+boxplot(ambi$score, main = "Outlier check: score")
+boxplot(ambi$n_g_sed_dw, main = "Outlier check: n_g_sed_dw")
+par(mfrow = c(1, 1))
+
+# 5. Spearman's correlation test (all of the Pearson's assumptions violated)
+cor.test(ambi$score, ambi$n_g_sed_dw, method = "spearman")
+
+corr <- ambi |> 
+  ggplot(aes(x = score, y = n_g_sed_dw))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "loess", se = TRUE, color = "steelblue") +
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free") +
+  labs(x = "M-AMBI score", y = "")
+
+corr
+```
