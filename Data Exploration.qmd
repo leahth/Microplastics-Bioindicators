@@ -2,13 +2,12 @@
 title: "Microplastics Bioindicators Data Exploration"
 author: "Leah Thornton Hampton"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output:
-  html_document: 
-    code_folding: hide
+format:
+  html:
+    code-fold: true
     toc: true
-    toc_depth: 4
-    number_sections: true
-    toc_float: true
+    toc-depth: 4
+    number-sections: true
 ---
 
 ```{r}
@@ -167,7 +166,7 @@ tomex2_vol_marinewater <- tomex2_vol_marinewater %>%
 
 ```
 
-What relevant toxicity data is in ToMEx 2.0?
+# What relevant toxicity data is in ToMEx 2.0?
 
 ```{r}
 

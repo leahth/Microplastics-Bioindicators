@@ -6,6 +6,7 @@ format: html
 ---
 
 ```{r, Packages}
+#| label: Load-libraries 
 
 library(tidyverse)
 library(ggpubr)
@@ -13,6 +14,7 @@ library(ggpubr)
 ```
 
 ```{r, Data Import}
+#| label: Import-data
 
 mp_sed_con <- read.csv(file = "Data/sed_mp_con.csv")
 
@@ -21,6 +23,8 @@ condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
 ```
 
 ```{r, Benthic Indices}
+
+#| label: MPs x all Benthic-indices
 
 mpdata_scores <- left_join(mp_sed_con, condition_scores) |> 
   group_by(stationid, stratumtype, index, score, condition, cond_class, n_g_sed_dw) |> 
@@ -63,6 +67,8 @@ cond_class
 ```
 
 ```{r, M-AMBI}
+
+#| label: MPs x M-AMBI
 
 ambi <- mpdata_scores |> 
   filter(index == "M-AMBI")
