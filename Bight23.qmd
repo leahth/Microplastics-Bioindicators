@@ -12,6 +12,7 @@ format:
 
 library(tidyverse)
 library(ggpubr)
+library(stringdist) # fuzzy matches
 
 ```
 
@@ -134,13 +135,11 @@ mpdata_abundance |>
   distinct(stationid) |> 
   nrow()
 
-#21 stations with mp data do not have microplastics data
+#21 stations with microplastics data do not have abundance data
 #drop stations with no abundance data from analysis
 
 mpdata_abundance <- mpdata_abundance |>
   drop_na(abundance)
-
-
 
 #taxon-abundance-correlation
 
@@ -193,11 +192,34 @@ taxon_cor |>
 
 ```
 
+# nMDS (MPs x M-AMBI, overlay families)
+
+```{r}
+#From B23 benthic infauna report
+# Macrobenthic community composition among the different strata was evaluated using non
+# metric Multi-Dimensional Scaling (nMDS) ordination of Bray-Curtis similarity values calculated 
+# from presence-absence transformed abundance of all samples. After the ordination, natural 
+# environmental factors (% sand, silt, and clay, total organic carbon and total nitrogen content, 
+# water depth, latitude, and longitude) and species abundance were correlated to the ordination 
+# plot pattern to provide insight into any distribution patterns of samples observed in the 
+# ordination (e.g., Gibson et al. 2013). Characteristic species contributing to within-group 
+# similarity and distinguishing taxa accounting for the mean Bray-Curtis dissimilarity between 
+# sample groupings illustrated in the nMDS were characterized using similarity percentage 
+# (SIMPER) analysis (Clarke et al. 2008; Warton et al. 2012). Community analyses were done with 
+# the metaMDS (similarity and ordination) and envFit (species and environmental factor 
+# correlations) programs within the R Vegan package (v2.7.2 Oksanen et al. 2025 [R version 
+# 4.5.2]) or PRIMER v7 (SIMPER analysis) (Clarke et al. 2014).
+
+
+
+
+```
+
+
+
 ```{r}
 
 ##David mentioned that species traits (e.g., position, mobility, reproduction, feeding) vary at the family level. Join families to the abundance data and analyze
-
-###NEED TO QA THIS -- NOT COMPLETE
 
 
 #Check taxon overlap with historical Bight infauna
@@ -208,7 +230,33 @@ cat("Taxa in both mpdata_abundance and bight_infauna_unified:", length(shared_ta
 cat("Taxa only in mpdata (not in historical data):", length(only_in_mpdata), "\n")
 
 #51 taxa in mpdata that don't match with taxa in unified data
-##CHECK to see if this is real or if there are syntax issues
+##Investigating to see if this is real or if there are syntax issues
+
+ref_taxa <- unique(bight_infauna_unified$taxon)
+
+best_idx <- amatch(only_in_mpdata, ref_taxa, method = "jw", maxDist = 1)
+
+fuzzy_matches <- data.frame(
+  mpdata_taxon = only_in_mpdata,
+  best_match_infauna_unified   = ref_taxa[best_idx],
+  jw_distance  = stringdist(only_in_mpdata, ref_taxa[best_idx], method = "jw")
+) |>
+  arrange(jw_distance)
+
+# Low distance (~0) = likely a typo/spacing issue; NA best_match = truly no close match
+potential_typos <- fuzzy_matches |> filter(!is.na(best_match_infauna_unified))
+
+write.csv(potential_typos, "Data/taxon_syntax.csv", row.names = FALSE)
+
+## There are some matches missing due to (what seem to be(?)) typos. "Fixing" these for downstream analysis
+#Created a key for changing some names, BUT probably want DAVID to check these at somepoint and see if others can be matched manually. In the meantime this is probably okay for looking at broad trends
+
+taxon_nomenclature_updates <- read.csv(file = "Data/taxon_nomenclature_updates.csv")
+
+mpdata_abundance <- mpdata_abundance |>
+  left_join(taxon_nomenclature_updates, by = c("taxon" = "mpdata_taxon")) |>
+  mutate(taxon = coalesce(mpdata_taxon_updated, taxon)) |>
+  select(-mpdata_taxon_updated)
 
 taxa_classification <- bight_infauna_unified |> 
   select(taxon, Phylum, Subphylum, Superclass, Class, Subclass, Infraclass, Superorder, Order, Suborder, Infraorder, Superfamily, Family) |> 
@@ -217,7 +265,96 @@ taxa_classification <- bight_infauna_unified |>
 n_distinct(taxa_classification$taxon)    #2860
 n_distinct(mpdata_abundance$taxon)  #787
 
+# for example "B ipalponephtys cornuta" (1)  changed to --> "Bipalponephtys cornuta" (10)
+#there are still some records missing classification
+
 mpdata_sp_class <- left_join(mpdata_abundance, taxa_classification, by = "taxon") ##add 
+
+
+mpdata_sp_class |>
+  count(Phylum) |>
+  ggplot(aes(x = n, y = reorder(Phylum, n))) +
+  geom_col() +
+  labs(x = "Number of records", y = NULL, title = "Records per Phylum") +
+  theme_minimal()
+
+mpdata_sp_phylum <- mpdata_sp_class |> 
+  drop_na(Phylum)
+
+phylum_abundance <- mpdata_sp_phylum |>
+  group_by(stationid, Phylum, n_g_sed_dw, stratumtype) |>
+  summarise(abundance = sum(abundance, na.rm = TRUE), .groups = "drop")
+
+phylum_cor <- phylum_abundance |>
+  group_by(Phylum) |>
+  filter(n() >= 5) |>
+  summarise(
+    n_stations = n(),
+    spearman_r = cor(abundance, n_g_sed_dw, method = "spearman", use = "complete.obs"),
+    p_value = cor.test(abundance, n_g_sed_dw, method = "spearman")$p.value,
+    .groups = "drop"
+  ) |>
+  mutate(p_adj = p.adjust(p_value, method = "BH")) |>
+  arrange(p_adj) |>
+  as.data.frame()
+
+phylum_sig_neg_cor <- phylum_cor |>
+  filter(spearman_r < 0 & p_value < 0.05)
+
+phylum_n_labels <- phylum_cor |>
+  filter(p_value < 0.2) |>
+  select(Phylum, n_stations)
+
+phylum_abundance |>
+  filter(Phylum %in% phylum_n_labels$Phylum) |>
+  left_join(phylum_n_labels, by = "Phylum") |>
+  mutate(Phylum = paste0(Phylum, " (n=", n_stations, ")")) |>
+  ggplot(aes(x = abundance, y = n_g_sed_dw)) +
+  geom_point(alpha = 0.4, size = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top", size = 2.5) +
+  scale_y_log10() +
+  facet_wrap(~Phylum, scales = "free") +
+  labs(x = "Abundance (log scale)", y = "MP concentration (particles/g dw)", title = "Phylum abundance vs. MP sediment concentration") +
+  theme_minimal(base_size = 9)
+
+#phylum-correlation-plot
+
+##As expected some families are positively correlated and some are negatively correlated with MP abundance.
+
+phylum_cor |>
+  mutate(
+    sig = case_when(
+      p_value < 0.001 ~ "p < 0.001",
+      p_value < 0.01  ~ "p < 0.01",
+      p_value < 0.05  ~ "p < 0.05",
+      TRUE          ~ "ns"
+    ),
+    sig = factor(sig, levels = c("p < 0.001", "p < 0.01", "p < 0.05", "ns")),
+    Phylum = reorder(Phylum, spearman_r)
+  ) |>
+  ggplot(aes(x = spearman_r, y = Phylum, fill = sig)) +
+  geom_col() +
+  geom_vline(xintercept = 0, linewidth = 0.4) +
+  scale_fill_manual(values = c(
+    "p < 0.001" = "#2166ac",
+    "p < 0.01"  = "#74add1",
+    "p < 0.05"  = "#abd9e9",
+    "ns"        = "grey75"
+  )) +
+  labs(
+    x = "Spearman r",
+    y = NULL,
+    fill = "Significance",
+    title = "Phylum abundance vs. MP sediment concentration"
+  ) +
+  theme_minimal()
+
+
+
+##Investigate rows where family is missing
+#.... add
+##
 
 
 mpdata_sp_class <- mpdata_sp_class |>
@@ -226,7 +363,6 @@ mpdata_sp_class <- mpdata_sp_class |>
 family_abundance <- mpdata_sp_class |>
   group_by(stationid, Family, n_g_sed_dw, stratumtype) |>
   summarise(abundance = sum(abundance, na.rm = TRUE), .groups = "drop")
-
 
 
 #family-abundance-correlation
@@ -244,8 +380,29 @@ family_cor <- family_abundance |>
   arrange(p_adj) |>
   as.data.frame()
 
-family_sig_neg_cor <- family_cor |>
-  filter(spearman_r < 0 & p_value < 0.05)
+family_sig_cor <- family_cor |>
+  filter(p_value < 0.05)
+
+family_n_labels <- family_sig_cor |>
+  select(Family, n_stations)
+
+family_abundance |>
+  filter(Family %in% family_n_labels$Family) |>
+  left_join(family_n_labels, by = "Family") |>
+  mutate(Family = paste0(Family, " (n=", n_stations, ")")) |>
+  ggplot(aes(x = abundance, y = n_g_sed_dw)) +
+  geom_point(alpha = 0.4, size = 0.8) +
+  geom_smooth(method = "lm", se = TRUE, color = "steelblue") +
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top", size = 2.5) +
+  #scale_y_log10() +
+  facet_wrap(~Family, scales = "free") +
+  labs(x = "Abundance (log scale)", y = "MP concentration (particles/g dw)", title = "Family abundance vs. MP sediment concentration") +
+  theme_minimal(base_size = 9)
+
+##Investigate Corymorphidae, Cyclochnidae, Onuphidae, Tellnidae
+
+FOI <- mpdata_sp_class %>%
+  filter(Family %in% c("Corymorphidae", "Cylichnidae", "Onuphidae", "Tellinidae"))
 
 #family-correlation-plot
 
@@ -278,5 +435,9 @@ family_cor |>
     title = "Family abundance vs. MP sediment concentration"
   ) +
   theme_minimal()
+```
 
+```{r}
+#Summary - at the Phyla level no phylum are significantly correlated with MP sediment concentrations. Some Familys are positively correlated with MP conc. some are negatively correlated. 
 
+```
