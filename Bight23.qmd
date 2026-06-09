@@ -13,6 +13,7 @@ format:
 library(tidyverse)
 library(ggpubr)
 library(stringdist) # fuzzy matches
+library(readxl)
 
 ```
 
@@ -27,6 +28,8 @@ condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
 benthic_abundance <- read.csv(file = "Data/B23 Post SDR benthic data.csv")
 
 bight_infauna_unified <- read.csv(file = "Data/ed14 historical Bight infauna for unified DB v2.csv")
+
+b23_infauna_summary<- read_excel("Data/B23 appx salinity SQO BLOE output summary.xlsx", sheet = "mambi")
 
 ```
 
@@ -119,6 +122,46 @@ corr <- ambi |>
 
 corr
 ```
+
+
+# MAMBI variables
+
+```{r}
+m_ambi_detailed <- left_join(mp_sed_con, b23_infauna_summary, by = "stationid") |> 
+  filter(!is.na(mambi_score))
+
+cor.test(m_ambi_detailed$mambi_score, m_ambi_detailed$n_g_sed_dw, method = "spearman")
+
+m_ambi_corr <- m_ambi_detailed |> 
+  ggplot(aes(x = mambi_score, y = n_g_sed_dw))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(method = "loess", se = TRUE, color = "steelblue") +
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~index, scales = "free") +
+  labs(x = "M-AMBI score", y = "")
+
+m_ambi_corr
+
+
+cor.test(m_ambi_detailed$ambi_score, m_ambi_detailed$n_g_sed_dw, method = "spearman")
+
+m_ambi_detailed |>
+  pivot_longer(cols = c(ambi_score, H, S),
+               names_to = "variable", values_to = "value") |>
+  mutate(variable = recode(variable,
+    ambi_score = "AMBI score",
+    H = "Species diversity (H)",
+    S = "Species richness (S)"
+  )) |>
+  ggplot(aes(x = value, y = n_g_sed_dw)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = TRUE, color = "steelblue") +
+  stat_cor(method = "spearman", label.x.npc = "left", label.y.npc = "top") +
+  facet_wrap(~variable, scales = "free_x") +
+  labs(x = "", y = "MP concentration (particles/g dw)")
+
+```
+
 
 # Taxon Abundance Correlation
 
@@ -397,7 +440,7 @@ family_abundance |>
   #scale_y_log10() +
   facet_wrap(~Family, scales = "free") +
   labs(x = "Abundance (log scale)", y = "MP concentration (particles/g dw)", title = "Family abundance vs. MP sediment concentration") +
-  theme_minimal(base_size = 9)
+  theme_minimal(base_size = 12)
 
 ##Investigate Corymorphidae, Cyclochnidae, Onuphidae, Tellnidae
 
@@ -435,9 +478,7 @@ family_cor |>
     title = "Family abundance vs. MP sediment concentration"
   ) +
   theme_minimal()
-```
 
-```{r}
 #Summary - at the Phyla level no phylum are significantly correlated with MP sediment concentrations. Some Familys are positively correlated with MP conc. some are negatively correlated. 
-
 ```
+
