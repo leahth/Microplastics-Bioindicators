@@ -538,7 +538,62 @@ taxon_cor |>
     title = "Taxon abundance vs. MP sediment concentration"
   ) +
   theme_minimal()
-
-
 ```
 
+```{r}
+#| label: testing TITAN analysis
+
+##NEEDS VALIDATION
+
+library(TITAN2)
+
+# Prepare inputs:
+# env: single numeric vector
+# txa: matrix/dataframe of taxon abundances (rows = stations, cols = taxa)
+
+station_order <- taxon_abundance |>
+  filter(trimws(taxon) != "", !is.na(taxon)) |>
+  distinct(stationid) |>
+  arrange(stationid) |>
+  pull(stationid)
+
+env <- taxon_abundance |>
+  distinct(stationid, n_g_sed_dw) |>
+  filter(stationid %in% station_order) |>
+  arrange(stationid) |>
+  pull(n_g_sed_dw)  # pull() forces a vector, not a dataframe
+
+txa <- taxon_abundance |>
+  mutate(taxon = trimws(taxon)) |>
+  filter(taxon != "", !is.na(taxon), taxon %in% common_taxa) |>
+  select(stationid, taxon, abundance) |>
+  pivot_wider(names_from = taxon, values_from = abundance, values_fill = 0) |>
+  arrange(stationid) |>
+  select(-stationid) |>
+  as.data.frame()
+
+
+env_stations <- taxon_abundance |>
+  distinct(stationid, n_g_sed_dw) |>
+  filter(stationid %in% station_order) |>
+  arrange(stationid) |>
+  pull(stationid)
+
+txa_stations <- taxon_abundance |>
+  mutate(taxon = trimws(taxon)) |>
+  filter(taxon != "", !is.na(taxon), taxon %in% common_taxa, stationid %in% station_order) |>
+  distinct(stationid) |>
+  arrange(stationid) |>
+  pull(stationid)
+
+all(env_stations == txa_stations)  # TRUE = aligned
+setdiff(env_stations, txa_stations)  # in env but not txa
+setdiff(txa_stations, env_stations)  # in txa but not env
+
+
+titan_out <- titan(env, txa, minSplt = 5, numPerm = 250, boot = TRUE, nBoot = 500)
+
+plot_taxa(titan_out)     # individual taxon responses
+plot_sumz(titan_out)     # community-level change point
+
+```
