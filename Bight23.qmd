@@ -6,9 +6,9 @@ format:
   html:
     toc: true
 ---
-# Load libraries 
 
-```{r, Packages}
+```{r}
+#| label: load-libraries
 
 library(tidyverse)
 library(ggpubr)
@@ -17,25 +17,19 @@ library(readxl)
 
 ```
 
-# Import data
-
-```{r, Data Import}
+```{r}
+#| label: import-data
 
 mp_sed_con <- read.csv(file = "Data/sed_mp_con.csv")
-
 condition_scores <- read.csv(file = "Data/b23_conditionscores.csv")
-
 benthic_abundance <- read.csv(file = "Data/B23 Post SDR benthic data.csv")
-
 bight_infauna_unified <- read.csv(file = "Data/ed14 historical Bight infauna for unified DB v2.csv")
-
 b23_infauna_summary<- read_excel("Data/B23 appx salinity SQO BLOE output summary.xlsx", sheet = "mambi")
 
 ```
 
-# MPs x all Benthic-indices
-```{r, Benthic Indices}
-
+```{r}
+#| label: mps-x-all-benthic-indicies
 mpdata_scores <- left_join(mp_sed_con, condition_scores) |> 
   group_by(stationid, stratumtype, index, score, condition, cond_class, n_g_sed_dw) |> 
   summarise(.groups = "drop") |> 
@@ -76,9 +70,9 @@ cond_class
 
 ```
 
-# MPs x M-AMBI
 
 ```{r, M-AMBI}
+#| label: mps-x-mambi
 
 ambi <- mpdata_scores |> 
   filter(index == "M-AMBI")
@@ -124,9 +118,11 @@ corr
 ```
 
 
-# MAMBI variables
 
 ```{r}
+
+#| label: mambi-variables
+
 m_ambi_detailed <- left_join(mp_sed_con, b23_infauna_summary, by = "stationid") |> 
   filter(!is.na(mambi_score))
 
@@ -163,10 +159,8 @@ m_ambi_detailed |>
 ```
 
 
-# Taxon Abundance Correlation
-
 ```{r}
-
+#| label: taxon-abundance-correlation
 #Join microplastics sediment concentration data with benthic taxon abundance
 
 mpdata_abundance <- left_join(mp_sed_con, benthic_abundance, by = "stationid") |>
@@ -235,9 +229,10 @@ taxon_cor |>
 
 ```
 
-# nMDS (MPs x M-AMBI, overlay families)
 
 ```{r}
+#| label: nmds-mps-x-mambi-overlay-families
+
 #From B23 benthic infauna report
 # Macrobenthic community composition among the different strata was evaluated using non
 # metric Multi-Dimensional Scaling (nMDS) ordination of Bray-Curtis similarity values calculated 
@@ -261,9 +256,9 @@ taxon_cor |>
 
 
 ```{r}
+#| label: phyla-and-family-analyses
 
 ##David mentioned that species traits (e.g., position, mobility, reproduction, feeding) vary at the family level. Join families to the abundance data and analyze
-
 
 #Check taxon overlap with historical Bight infauna
 shared_taxa <- intersect(unique(mpdata_abundance$taxon), unique(bight_infauna_unified$taxon))
