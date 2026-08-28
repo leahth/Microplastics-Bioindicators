@@ -1,0 +1,64 @@
+---
+title: "Toxicity Scoring"
+format: html
+---
+
+This file assigns toxicity scores to species in the ToMEx database for the prioritization of candidate bioindicators for microplastics. Each species is scored based on 4 criteria within the toxicity category - sensitivity, dose response, level of biological organization, and weight of evidence.
+
+```{r, packages and data}
+
+library(tidyverse)
+
+tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
+
+```
+
+```{r, data tidying}
+
+```
+
+# Sensitivity
+
+0 – Effects observed only at concentrations greater than one order of magnitude of environmentally relevant concentrations
+1 – Effects observed within an order of magnitude of environmentally relevant concentrations
+2 – Effects observed at or below environmentally relevant concentrations
+
+```{r, sensitivity}
+
+```
+
+# Dose Response
+
+0 – No data sets available with at least 3 test concentrations in series or data sets with 3+ test concentrations do not demonstrate that response increases with increasing dose
+1 – At least one data set available with 3-4 test concentrations, response increases with increasing dose
+2 – At least one data set available with 5 test concentrations, response increases with increasing dose
+
+```{r, dose response}
+
+```
+
+# Level of Biological Organization
+
+0 – Effects only observed below the organism level
+1 – Effects observed at the organism and population levels
+2 – Effects observed at the organism and population levels pertaining to growth, development, reproduction, and survival
+
+```{r, level of biological organization}
+
+```
+
+# Weight of Evidence
+
+0 – Only 1 available study available or 2 studies with directly conflicting results
+1 – At least 2 available studies and results generally agree
+2 – More than 2 available studies and results generally agree
+
+```{r, weight of evidence}
+
+```
+
+```{r, summary of species toxicity scores}
+
+```
+
+End of Analysis.

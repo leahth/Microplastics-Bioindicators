@@ -358,3 +358,144 @@ tox_summary_plot
 
 ```
 
+# Species–Endpoint Relationships
+
+```{r}
+#| label: heb-species-endpoints
+#| fig-width: 14
+#| fig-height: 14
+#| warning: false
+
+library(ggraph)
+library(igraph)
+library(geomtextpath)
+
+tomex2_heb <- read_csv(
+  "Data/ToMEx_Search2026-03-04.csv",
+  na = c("", "NA", "Na", "N/A", "--")
+) |>
+  clean_names(replace = c("μ" = "u")) |>
+  filter(
+    #technical_red_criteria == "Red Criteria Passed",
+    #risk_assessment_red_criteria == "Red Criteria Passed",
+    !is.na(organism_group),
+    !is.na(species)
+  )
+
+organism_groups <- tomex2_heb %>%
+  filter(!is.na(organism_group)) %>%
+  distinct(organism_group)
+
+endpoint_labels <- tomex2_heb %>%
+  filter(!is.na(broad_endpoint_category)) %>%
+  distinct(broad_endpoint_category)
+
+# Build hierarchy: root -> "Species"/"Endpoints" -> group/category -> leaf
+hierarchy <- bind_rows(
+  tibble(from = "root", to = c("Species", "Endpoints")),
+  organism_groups %>%
+    transmute(from = "Species", to = organism_group),
+  endpoint_labels %>%
+    transmute(from = "Endpoints", to = broad_endpoint_category)
+)
+
+vertices <- tibble(name = unique(c(hierarchy$from, hierarchy$to))) %>%
+  mutate(
+    node_type = case_when(
+      name == "root"                                     ~ "root",
+      name %in% c("Species", "Endpoints")               ~ "top",
+      name %in% organism_groups$organism_group          ~ "group",
+      name %in% endpoint_labels$broad_endpoint_category ~ "endpoint"
+    )
+  )
+
+g <- graph_from_data_frame(hierarchy, vertices = vertices, directed = TRUE)
+
+# Edges: organism group <-> broad endpoint category, coloured by effect (Yes/No)
+connections <- tomex2_heb %>%
+  filter(!is.na(broad_endpoint_category),
+         !is.na(effect),
+         !is.na(organism_group)) %>%
+  distinct(organism_group, broad_endpoint_category, effect)
+
+from_idx <- match(connections$organism_group,            V(g)$name)
+to_idx   <- match(connections$broad_endpoint_category,   V(g)$name)
+valid    <- !is.na(from_idx) & !is.na(to_idx)
+
+con_data <- get_con(
+  from   = from_idx[valid],
+  to     = to_idx[valid],
+  effect = connections$effect[valid]
+)
+
+# Extract layout to compute organism group arc labels
+layout <- create_layout(g, layout = "dendrogram", circular = TRUE)
+
+# Nodes use fill; edges use colour — avoids scale conflict
+ggraph(layout) +
+  geom_conn_bundle(
+    data    = con_data,
+    aes(colour = effect),
+    alpha   = 0.2,
+    tension = 0.85
+  ) +
+  geom_node_text(
+    aes(filter = node_type %in% c("group", "endpoint"),
+        angle  = node_angle(x, y),
+        label  = name),
+    size   = 2.5,
+    hjust  = "outward",
+    colour = "gray20"
+  ) +
+  scale_colour_manual(
+    values = c("Yes" = "#E05C5C", "No" = "steelblue"),
+    name   = "Effect"
+  ) +
+  scale_fill_discrete(guide = "none") +
+  theme_void() +
+  theme(legend.position = "right")
+```
+
+## Endpoint Ribbon Plot
+
+```{r}
+#| label: endpoint-ribbon
+#| fig-width: 12
+#| fig-height: 10
+#| warning: false
+
+library(ggalluvial)
+
+alluvial_data <- tomex2 %>%
+  filter(
+    !is.na(broad_endpoint_category),
+    !is.na(specific_endpoint_category),
+    !is.na(effect)
+  ) %>%
+  group_by(broad_endpoint_category, specific_endpoint_category) %>%
+  summarise(
+    n_yes = sum(effect == "Yes", na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  filter(n_yes > 0)
+
+ggplot(alluvial_data,
+       aes(axis1 = broad_endpoint_category,
+           axis2 = specific_endpoint_category,
+           y = n_yes)) +
+  geom_alluvium(aes(fill = broad_endpoint_category), width = 1/8, alpha = 0.7) +
+  geom_stratum(width = 1/8, fill = "grey92", color = "grey60") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 2.5) +
+  scale_x_discrete(
+    limits = c("Broad Endpoint Category", "Specific Endpoint Category"),
+    expand = c(0.15, 0.05)
+  ) +
+  scale_fill_brewer(palette = "Set3") +
+  theme_minimal() +
+  labs(y = "Count (effect = Yes)", fill = "Broad Endpoint Category") +
+  theme(
+    legend.position = "bottom",
+    legend.text = element_text(size = 8)
+  )
+```
+
