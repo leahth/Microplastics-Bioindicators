@@ -1,0 +1,5 @@
+particle_concentration,sample_id,min_length_um,max_length_um,study_media
+35.7,Zhu et al. 2021 (max 1L grab conc.),40,8080,marine surface
+4.1,Zhu et al. 2021 (mean 1L grab conc.),40,8080,marine surface
+2.06,"Singh et al. 2025 (mean surface concentration, manta trawl)",333,5000,marine surface
+8.71,"Singh et al. 2025 (max surface concentration, manta trawl)",333,5000,marine surface

@@ -4,14 +4,21 @@ format: html
 ---
 
 This file assigns toxicity scores to species in the ToMEx database for the prioritization of candidate bioindicators for microplastics. Each species is scored based on 4 criteria within the toxicity category - sensitivity, dose response, level of biological organization, and weight of evidence.
+# Setup
 
 ```{r, packages and data}
 
 library(tidyverse)
+library(readxl)
 
 tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
 
+##Particle only data, Marine environment, particle aligned w/ alpha = marine surface water, upper particle length 50000 um
+marine_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_marine_particle_aligned.xlsx", sheet = 1)
+
 ```
+
+# Data tidying
 
 ```{r, data tidying}
 
@@ -24,6 +31,46 @@ tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
 2 – Effects observed at or below environmentally relevant concentrations
 
 ```{r, sensitivity}
+
+
+#What is an environmentally relevant concentration?
+## Xhu et al. (2021) reported concentrations as high as 35.70 particles/Lin one-liter grab samples in the SF Bay(Table S15). Average grab sample concentrations were 4.1 +/- 6.3 particles/L. https://doi.org/10.1021/acsestwater.0c00292
+
+## Singh et al. (2025) found concentrations ranged from 0.03 to 8.71 particles/L in San Pedro Bay water column (net sample collection). Mean surface concentrations were 2.06 particles per liter. Concentrations ranged from 500 to 3000 particles/kg dry weight in the sediment of the San Pedro Shelf (Van Veen grab)
+
+## Environmental concentrations were "corrected" using the MaTCH tool at https://hannahhapich.shinyapps.io/match/. Data input file is "\Data\INPUT_match_tool.csv". Data output file is "\Data\OUTPUT_match_tool.csv"
+
+#Importing corrected concentrations used on graph below:
+
+corrected_concs <- read.csv(file = "Data/OUTPUT_match_tool.csv")
+
+corrected_concs <- corrected_concs |> 
+    mutate(corrected_particle_per_mL = corrected_concentration/1000)
+
+#filter for only concentrations with effects
+marine_particle_aligned <- marine_particle_aligned_import |> 
+    filter(Effect == "Yes")
+
+##Investigate level of biological organization, number of species, other parameters??. Add lines for mean and max concentrtions found in each study
+
+n_species <- length(unique(marine_particle_aligned$Species))
+n_groups <- length(unique(marine_particle_aligned$`Organism Group`))
+
+ggplot(marine_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
+  geom_boxplot(outlier.shape = NA, width = 0.4) +
+  geom_jitter(width = 0.1, alpha = 0.3) +
+  geom_hline(data = corrected_concs, aes(yintercept = corrected_particle_per_mL), linetype = "dashed", color = "gray40") +
+  geom_text(data = corrected_concs, aes(x = 1.3, y = corrected_particle_per_mL, label = sample_id), hjust = 0, size = 3, color = "gray20") +
+  scale_y_log10() +
+  scale_x_discrete(expand = expansion(add = c(0.5, 1))) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = "Plotted Dose (particles/mL)",
+    caption = paste0("Data for ", n_species, " species across ", n_groups, " organism groups")
+  ) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0), plot.margin = margin(5.5, 5.5, 5.5, 5.5))
 
 ```
 

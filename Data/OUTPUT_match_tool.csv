@@ -1,0 +1,5 @@
+"particle_concentration","sample_id","min_length_um","max_length_um","study_media","alpha","alpha_lower","alpha_upper","correction_factor","correction_factor_lower","correction_factor_upper","corrected_concentration","corrected_concentration_lower","corrected_concentration_upper"
+35.7,"Zhu et al. 2021 (max 1L grab conc.)",40,8080,"marine surface",2.07,2.04,2.1,2.10090034952402,2.05787125959878,2.14485535306856,75.0021424780075,73.4660039676765,76.5713361045475
+4.1,"Zhu et al. 2021 (mean 1L grab conc.)",40,8080,"marine surface",2.07,2.04,2.1,2.10090034952402,2.05787125959878,2.14485535306856,8.61369143304848,8.437272164355,8.79390694758108
+2.06,"Singh et al. 2025 (mean surface concentration, manta trawl)",333,5000,"marine surface",2.07,2.04,2.1,21.3965373742784,19.7531831188862,23.1843226444924,44.0768669910135,40.6915572249057,47.7597046476543
+8.71,"Singh et al. 2025 (max surface concentration, manta trawl)",333,5000,"marine surface",2.07,2.04,2.1,21.3965373742784,19.7531831188862,23.1843226444924,186.363840529965,172.050224965499,201.935450233529
