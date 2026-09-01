@@ -1,6 +1,8 @@
 particle_concentration,sample_id,min_length_um,max_length_um,study_media,alpha,alpha_lower,alpha_upper,correction_factor,correction_factor_lower,correction_factor_upper,corrected_concentration,corrected_concentration_lower,corrected_concentration_upper
 3000,"Singh et al. 2025 (max sediment concentration, grab)",250,5000,marine sediment,2.57,2.37,2.77,53.21438361,32.34214624,87.83627464,159643.1508,97026.43872,263508.8239
 1102,"Singh et al. 2025 (mean nearshore sediment concentration, grab)",250,5000,marine sediment,2.57,2.37,2.77,53.21438361,32.34214624,87.83627464,58642.25074,35641.04516,96795.57465
+7991.75,Bight '23 (max sediment embayments),125,5000,marine sediment,2.57,2.37,2.77,17.81496697,12.38546496,25.66359086,142372.7623,98981.53962,205097.0022
+2290.3,Bight '23 (mean sediment embayments),125,5000,marine sediment,2.57,2.37,2.77,17.81496697,12.38546496,25.66359086,40801.61884,28366.4304,58777.32214
 35.7,Zhu et al. 2021 (max 1L grab conc.),40,8080,marine surface,2.07,2.04,2.1,2.10090035,2.05787126,2.144855353,75.00214248,73.46600397,76.5713361
 4.1,Zhu et al. 2021 (mean 1L grab conc.),40,8080,marine surface,2.07,2.04,2.1,2.10090035,2.05787126,2.144855353,8.613691433,8.437272164,8.793906948
 2.06,"Singh et al. 2025 (mean surface concentration, manta trawl)",333,5000,marine surface,2.07,2.04,2.1,21.39653737,19.75318312,23.18432264,44.07686699,40.69155722,47.75970465

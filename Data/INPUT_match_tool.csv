@@ -5,3 +5,5 @@ particle_concentration,sample_id,min_length_um,max_length_um,study_media
 8.71,"Singh et al. 2025 (max surface concentration, manta trawl)",333,5000,marine surface
 3000,"Singh et al. 2025 (max sediment concentration, grab)",250,5000,marine sediment
 1102,"Singh et al. 2025 (mean nearshore sediment concentration, grab)",250,5000,marine sediment
+7991.75,Bight '23 (max sediment embayments),125,5000,marine sediment
+2290.3,Bight '23 (mean sediment embayments),125,5000,marine sediment

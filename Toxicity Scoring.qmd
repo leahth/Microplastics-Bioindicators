@@ -13,6 +13,7 @@ This file assigns toxicity scores to species in the ToMEx database for the prior
 
 library(tidyverse)
 library(readxl)
+library(ggrepel)
 
 tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
 
@@ -51,19 +52,28 @@ marinesed_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-09-0
 corrected_concs <- read.csv(file = "Data/OUTPUT_match_tool.csv")
 
 corrected_concs <- corrected_concs |>
-    mutate(corrected_particle_per_mL = corrected_concentration/1000,
-           display_id = case_when(
+    mutate( display_id = case_when(
              sample_id == "Singh et al. 2025 (max surface concentration, manta trawl)" ~ "Singh et al. 2025 (Max conc.)",
              sample_id == "Singh et al. 2025 (mean surface concentration, manta trawl)" ~ "Singh et al. 2025 (Mean conc.)",
              sample_id == "Zhu et al. 2021 (max 1L grab conc.)" ~ "Zhu et al. 2021 (Max conc.)",
              sample_id == "Zhu et al. 2021 (mean 1L grab conc.)" ~ "Zhu et al. 2021 (Mean conc.)",
              sample_id == "Singh et al. 2025 (max sediment concentration, grab)" ~ "Singh et al. 2025 (Max sediment conc.)",
              sample_id == "Singh et al. 2025 (mean nearshore sediment concentration, grab)" ~ "Singh et al. 2025 (Mean sediment conc.)",
+             sample_id == "Bight '23 (max sediment embayments)" ~ "Bight '23 (Max conc.)",
+             sample_id == "Bight '23 (mean sediment embayments)" ~ "Bight '23 (Mean conc.)",
              TRUE ~ sample_id
-           ))
+           )) |> 
+    mutate( unit = case_when(
+      study_media == "marine surface" ~ "particles/L",
+      study_media == "marine sediment" ~ "particles/kg",
+      TRUE ~ study_media
+    ))
 
 #Water lines are converted to Particles/mL to match the marinewater Plotted Dose Values; sediment lines are already in Particles/kg sediment, matching the marinesed Plotted Dose Values, so no conversion is applied.
-corrected_concs_water <- corrected_concs |> filter(study_media == "marine surface")
+corrected_concs_water <- corrected_concs |> 
+  filter(study_media == "marine surface") |> 
+  mutate(corrected_particle_per_mL = corrected_concentration/1000)
+
 corrected_concs_sed <- corrected_concs |> filter(study_media == "marine sediment")
 
 
@@ -79,6 +89,13 @@ marinewater_particle_aligned <- marinewater_particle_aligned_import |>
 
 n_species <- length(unique(marinewater_particle_aligned$Species))
 n_groups <- length(unique(marinewater_particle_aligned$`Organism Group`))
+
+```
+
+```{r, Graph sensitivity by organism group}
+#| fig-width: 10
+#| fig-height: 8
+#| fig-dpi: 300
 
 #12 organism groups is too many to color distinctly and stay colorblind-safe; lump the 4 smallest into "Other"
 marinewater_particle_aligned <- marinewater_particle_aligned |>
@@ -120,7 +137,7 @@ ggplot(marinewater_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
 
 ```
 
-```{r, sensitivity by level of biological organization}
+```{r, Graph sensitivity by level of biological organization}
 #| fig-width: 10
 #| fig-height: 8
 #| fig-dpi: 300
@@ -166,7 +183,7 @@ ggplot(marinewater_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
 
 ```
 
-```{r, sensitivity sediment}
+```{r, Graph sensitivity sediment by organism group}
 #| fig-width: 10
 #| fig-height: 8
 #| fig-dpi: 300
@@ -193,7 +210,7 @@ ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
   geom_jitter(aes(color = `Organism Group`), width = 0.35, alpha = 0.6) +
   scale_color_manual(values = sed_organism_colors, name = "Organism Group") +
   geom_hline(data = corrected_concs_sed, aes(yintercept = corrected_concentration), linetype = "dashed", color = "gray40", alpha = 0.6) +
-  geom_text(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
+  geom_text_repel(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, direction = "y", nudge_y = 0.2, segment.size = 0.3, min.segment.length = 0, size = 4, color = "gray20") +
   scale_y_log10() +
   scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
   coord_cartesian(clip = "off") +
@@ -212,7 +229,7 @@ ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
 
 ```
 
-```{r, sensitivity sediment by level of biological organization}
+```{r, Graph sensitivity sediment by level of biological organization}
 #| fig-width: 10
 #| fig-height: 8
 #| fig-dpi: 300
@@ -227,7 +244,7 @@ ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
   scale_color_manual(values = bio_org_colors, name = str_wrap("Level of Biological Organization", width = 20), breaks = c("Organism", "Population", "Subcell/Cell/Tissue")) +
   scale_alpha_manual(values = bio_org_alphas, guide = "none") +
   geom_hline(data = corrected_concs_sed, aes(yintercept = corrected_concentration), linetype = "dashed", color = "gray40", alpha = 0.6) +
-  geom_text(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
+  geom_text_repel(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, direction = "y", nudge_y = 0.2, segment.size = 0.3, min.segment.length = 0, size = 4, color = "gray20") +
   scale_y_log10() +
   scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
   coord_cartesian(clip = "off") +
@@ -253,6 +270,8 @@ ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
 2 – At least one data set available with 5 test concentrations, response increases with increasing dose
 
 ```{r, dose response}
+##column marinewater_particle_aligned_import$`Number of Doses`
+
 
 ```
 
