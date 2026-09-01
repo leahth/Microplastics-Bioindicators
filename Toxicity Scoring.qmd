@@ -1,20 +1,24 @@
 ---
 title: "Toxicity Scoring"
-format: html
+format:
+  html:
+    code-fold: true
 ---
 
 This file assigns toxicity scores to species in the ToMEx database for the prioritization of candidate bioindicators for microplastics. Each species is scored based on 4 criteria within the toxicity category - sensitivity, dose response, level of biological organization, and weight of evidence.
 # Setup
 
 ```{r, packages and data}
+#| output: false
 
 library(tidyverse)
 library(readxl)
 
 tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
 
-##Particle only data, Marine environment, particle aligned w/ alpha = marine surface water, upper particle length 50000 um
-marine_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_marine_particle_aligned.xlsx", sheet = 1)
+##Particle only data, marine water, particle aligned w/ alpha = marine surface water, upper particle length 50000 um
+marinewater_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_marinewater_particle_aligned.xlsx", sheet = 1)
+marinesed_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-09-01_marinesed_particle_aligned.xlsx", sheet = 1)
 
 ```
 
@@ -31,46 +35,214 @@ marine_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_m
 2 – Effects observed at or below environmentally relevant concentrations
 
 ```{r, sensitivity}
-
+#| fig-width: 10
+#| fig-height: 8
+#| fig-dpi: 300
 
 #What is an environmentally relevant concentration?
 ## Xhu et al. (2021) reported concentrations as high as 35.70 particles/Lin one-liter grab samples in the SF Bay(Table S15). Average grab sample concentrations were 4.1 +/- 6.3 particles/L. https://doi.org/10.1021/acsestwater.0c00292
 
 ## Singh et al. (2025) found concentrations ranged from 0.03 to 8.71 particles/L in San Pedro Bay water column (net sample collection). Mean surface concentrations were 2.06 particles per liter. Concentrations ranged from 500 to 3000 particles/kg dry weight in the sediment of the San Pedro Shelf (Van Veen grab)
 
-## Environmental concentrations were "corrected" using the MaTCH tool at https://hannahhapich.shinyapps.io/match/. Data input file is "\Data\INPUT_match_tool.csv". Data output file is "\Data\OUTPUT_match_tool.csv"
+## Environmental concentrations were "corrected" using the MaTCH tool at https://hannahhapich.shinyapps.io/match/. Data input file to MaTCH is aved as "\Data\INPUT_match_tool.csv". Data output file is "\Data\OUTPUT_match_tool.csv"
 
 #Importing corrected concentrations used on graph below:
 
 corrected_concs <- read.csv(file = "Data/OUTPUT_match_tool.csv")
 
-corrected_concs <- corrected_concs |> 
-    mutate(corrected_particle_per_mL = corrected_concentration/1000)
+corrected_concs <- corrected_concs |>
+    mutate(corrected_particle_per_mL = corrected_concentration/1000,
+           display_id = case_when(
+             sample_id == "Singh et al. 2025 (max surface concentration, manta trawl)" ~ "Singh et al. 2025 (Max conc.)",
+             sample_id == "Singh et al. 2025 (mean surface concentration, manta trawl)" ~ "Singh et al. 2025 (Mean conc.)",
+             sample_id == "Zhu et al. 2021 (max 1L grab conc.)" ~ "Zhu et al. 2021 (Max conc.)",
+             sample_id == "Zhu et al. 2021 (mean 1L grab conc.)" ~ "Zhu et al. 2021 (Mean conc.)",
+             sample_id == "Singh et al. 2025 (max sediment concentration, grab)" ~ "Singh et al. 2025 (Max sediment conc.)",
+             sample_id == "Singh et al. 2025 (mean nearshore sediment concentration, grab)" ~ "Singh et al. 2025 (Mean sediment conc.)",
+             TRUE ~ sample_id
+           ))
+
+#Water lines are converted to Particles/mL to match the marinewater Plotted Dose Values; sediment lines are already in Particles/kg sediment, matching the marinesed Plotted Dose Values, so no conversion is applied.
+corrected_concs_water <- corrected_concs |> filter(study_media == "marine surface")
+corrected_concs_sed <- corrected_concs |> filter(study_media == "marine sediment")
+
+
+#total data available, before filtering to significant effects only
+n_species_total <- length(unique(marinewater_particle_aligned_import$Species))
+n_groups_total <- length(unique(marinewater_particle_aligned_import$`Organism Group`))
 
 #filter for only concentrations with effects
-marine_particle_aligned <- marine_particle_aligned_import |> 
+marinewater_particle_aligned <- marinewater_particle_aligned_import |>
     filter(Effect == "Yes")
 
 ##Investigate level of biological organization, number of species, other parameters??. Add lines for mean and max concentrtions found in each study
 
-n_species <- length(unique(marine_particle_aligned$Species))
-n_groups <- length(unique(marine_particle_aligned$`Organism Group`))
+n_species <- length(unique(marinewater_particle_aligned$Species))
+n_groups <- length(unique(marinewater_particle_aligned$`Organism Group`))
 
-ggplot(marine_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
-  geom_boxplot(outlier.shape = NA, width = 0.4) +
-  geom_jitter(width = 0.1, alpha = 0.3) +
-  geom_hline(data = corrected_concs, aes(yintercept = corrected_particle_per_mL), linetype = "dashed", color = "gray40") +
-  geom_text(data = corrected_concs, aes(x = 1.3, y = corrected_particle_per_mL, label = sample_id), hjust = 0, size = 3, color = "gray20") +
+#12 organism groups is too many to color distinctly and stay colorblind-safe; lump the 4 smallest into "Other"
+marinewater_particle_aligned <- marinewater_particle_aligned |>
+    mutate(organism_group_display = fct_lump_n(`Organism Group`, n = 8, other_level = "Other"))
+
+organism_colors <- c(
+  "Fish" = "#2a78d6",
+  "Crustacea" = "#eb6834",
+  "Mollusca" = "#1baf7a",
+  "Algae" = "#eda100",
+  "Cnidaria" = "#e87ba4",
+  "Bacterium" = "#008300",
+  "Rotifera" = "#4a3aa7",
+  "Echinoderm" = "#e34948",
+  "Other" = "#898781"
+)
+
+ggplot(marinewater_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
+  geom_boxplot(outlier.shape = NA, width = 1) +
+  geom_jitter(aes(color = organism_group_display), width = 0.35, alpha = 0.6) +
+  scale_color_manual(values = organism_colors, name = "Organism Group") +
+  geom_hline(data = corrected_concs_water, aes(yintercept = corrected_particle_per_mL), linetype = "dashed", color = "gray40", alpha = 0.6) +
+  geom_text(data = corrected_concs_water, aes(x = 1.7, y = corrected_particle_per_mL, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
   scale_y_log10() +
-  scale_x_discrete(expand = expansion(add = c(0.5, 1))) +
+  scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
   coord_cartesian(clip = "off") +
   labs(
+    title = "Marine Water",
     x = NULL,
-    y = "Plotted Dose (particles/mL)",
-    caption = paste0("Data for ", n_species, " species across ", n_groups, " organism groups")
+    y = "Dose (particles/mL)",
+    caption = paste0("Data available for ", n_species_total, " species across ", n_groups_total, " organism groups.\nData with significant effects are plotted, representing ", n_species, " species across ", n_groups, " organism groups.")
   ) +
-  theme_minimal() +
-  theme(plot.caption = element_text(hjust = 0), plot.margin = margin(5.5, 5.5, 5.5, 5.5))
+  theme_minimal(base_size = 15) +
+  theme(plot.caption = element_text(hjust = 0, size = rel(0.9)), plot.margin = margin(5.5, 5.5, 5.5, 5.5),
+        panel.background = element_blank(), plot.background = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        axis.ticks.y = element_line(color = "black"))
+
+```
+
+```{r, sensitivity by level of biological organization}
+#| fig-width: 10
+#| fig-height: 8
+#| fig-dpi: 300
+
+marinewater_particle_aligned <- marinewater_particle_aligned |>
+    mutate(bio_org_display = fct_collapse(`Level of Biological Organization`,
+             `Subcell/Cell/Tissue` = c("Subcell", "Cell", "Tissue")))
+
+bio_org_colors <- c(
+  "Organism" = "#eda100",
+  "Population" = "#2a78d6",
+  "Subcell/Cell/Tissue" = "#898781"
+)
+
+bio_org_alphas <- c(
+  "Organism" = 0.8,
+  "Population" = 0.8,
+  "Subcell/Cell/Tissue" = 0.2
+)
+
+ggplot(marinewater_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
+  geom_boxplot(outlier.shape = NA, width = 1) +
+  geom_jitter(aes(color = bio_org_display, alpha = bio_org_display), width = 0.35) +
+  scale_color_manual(values = bio_org_colors, name = str_wrap("Level of Biological Organization", width = 20), breaks = c("Organism", "Population", "Subcell/Cell/Tissue")) +
+  scale_alpha_manual(values = bio_org_alphas, guide = "none") +
+  geom_hline(data = corrected_concs_water, aes(yintercept = corrected_particle_per_mL), linetype = "dashed", color = "gray40", alpha = 0.6) +
+  geom_text(data = corrected_concs_water, aes(x = 1.7, y = corrected_particle_per_mL, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
+  scale_y_log10() +
+  scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Marine Water",
+    x = NULL,
+    y = "Dose (particles/mL)",
+    caption = paste0("Data available for ", n_species_total, " species across ", n_groups_total, " organism groups.\nData with significant effects are plotted, representing ", n_species, " species across ", n_groups, " organism groups.")
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(plot.caption = element_text(hjust = 0, size = rel(0.9)), plot.margin = margin(5.5, 5.5, 5.5, 5.5),
+        panel.background = element_blank(), plot.background = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        axis.ticks.y = element_line(color = "black"))
+
+```
+
+```{r, sensitivity sediment}
+#| fig-width: 10
+#| fig-height: 8
+#| fig-dpi: 300
+
+#total data available, before filtering to significant effects only
+n_species_total_sed <- length(unique(marinesed_particle_aligned_import$Species))
+n_groups_total_sed <- length(unique(marinesed_particle_aligned_import$`Organism Group`))
+
+#filter for only concentrations with effects
+marinesed_particle_aligned <- marinesed_particle_aligned_import |>
+    filter(Effect == "Yes")
+
+n_species_sed <- length(unique(marinesed_particle_aligned$Species))
+n_groups_sed <- length(unique(marinesed_particle_aligned$`Organism Group`))
+
+#only 2 organism groups present (Annelida, Mollusca); Mollusca kept the same color as the marinewater plot for consistency
+sed_organism_colors <- c(
+  "Annelida" = "#2a78d6",
+  "Mollusca" = "#1baf7a"
+)
+
+ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
+  geom_boxplot(outlier.shape = NA, width = 1) +
+  geom_jitter(aes(color = `Organism Group`), width = 0.35, alpha = 0.6) +
+  scale_color_manual(values = sed_organism_colors, name = "Organism Group") +
+  geom_hline(data = corrected_concs_sed, aes(yintercept = corrected_concentration), linetype = "dashed", color = "gray40", alpha = 0.6) +
+  geom_text(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
+  scale_y_log10() +
+  scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Marine Sediment",
+    x = NULL,
+    y = "Dose (particles/kg sediment)",
+    caption = paste0("Data available for ", n_species_total_sed, " species across ", n_groups_total_sed, " organism groups.\nData with significant effects are plotted, representing ", n_species_sed, " species across ", n_groups_sed, " organism groups.")
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(plot.caption = element_text(hjust = 0, size = rel(0.9)), plot.margin = margin(5.5, 5.5, 5.5, 5.5),
+        panel.background = element_blank(), plot.background = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        axis.ticks.y = element_line(color = "black"))
+
+```
+
+```{r, sensitivity sediment by level of biological organization}
+#| fig-width: 10
+#| fig-height: 8
+#| fig-dpi: 300
+
+marinesed_particle_aligned <- marinesed_particle_aligned |>
+    mutate(bio_org_display = fct_collapse(`Level of Biological Organization`,
+             `Subcell/Cell/Tissue` = intersect(c("Subcell", "Cell", "Tissue"), `Level of Biological Organization`)))
+
+ggplot(marinesed_particle_aligned, aes(x = "", y = `Plotted Dose Values`)) +
+  geom_boxplot(outlier.shape = NA, width = 1) +
+  geom_jitter(aes(color = bio_org_display, alpha = bio_org_display), width = 0.35) +
+  scale_color_manual(values = bio_org_colors, name = str_wrap("Level of Biological Organization", width = 20), breaks = c("Organism", "Population", "Subcell/Cell/Tissue")) +
+  scale_alpha_manual(values = bio_org_alphas, guide = "none") +
+  geom_hline(data = corrected_concs_sed, aes(yintercept = corrected_concentration), linetype = "dashed", color = "gray40", alpha = 0.6) +
+  geom_text(data = corrected_concs_sed, aes(x = 1.5, y = corrected_concentration, label = display_id), hjust = 0, vjust = -0.25, size = 4, color = "gray20") +
+  scale_y_log10() +
+  scale_x_discrete(expand = expansion(add = c(0.75, 1.5))) +
+  coord_cartesian(clip = "off") +
+  labs(
+    title = "Marine Sediment",
+    x = NULL,
+    y = "Dose (particles/kg sediment)",
+    caption = paste0("Data available for ", n_species_total_sed, " species across ", n_groups_total_sed, " organism groups.\nData with significant effects are plotted, representing ", n_species_sed, " species across ", n_groups_sed, " organism groups.")
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(plot.caption = element_text(hjust = 0, size = rel(0.9)), plot.margin = margin(5.5, 5.5, 5.5, 5.5),
+        panel.background = element_blank(), plot.background = element_blank(),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        axis.ticks.y = element_line(color = "black"))
 
 ```
 
