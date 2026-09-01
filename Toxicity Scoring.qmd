@@ -19,8 +19,8 @@ library(DT)
 tox_dat <- readRDS(file = "Data/aoc_setup_tomex2.RDS")
 
 ##Particle only data, marine water, particle aligned w/ alpha = marine surface water, upper particle length 50000 um
-marinewater_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_marinewater_particle_aligned.xlsx", sheet = 1)
-marinesed_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-09-01_marinesed_particle_aligned.xlsx", sheet = 1)
+marinewater_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-08-31_marinewater_particle_aligned.xlsx", sheet = 1) %>% filter(Environment == "Marine")
+marinesed_particle_aligned_import <- read_excel("Data/ToMEx_Exploration2026-09-01_marinesed_particle_aligned.xlsx", sheet = 1) %>% filter(Environment == "Marine")
 
 ```
 
